@@ -1,32 +1,59 @@
-name: Prepare QnA Data in Mistral Format
-description: Loads a Hugging Face QnA dataset and saves a JSONL file in Mistral instruction format.
+name: Load HuggingFace Dataset to CSV
+description: Loads a Hugging Face dataset split and saves it as a CSV file for downstream use.
 
 inputs:
-  - name: dataset_name
-    type: String
-    description: Hugging Face QnA dataset name (e.g. squad)
-  - name: max_samples
-    type: Integer
-    description: Maximum number of samples (0 for all)
-  - name: output_path
-    type: String
-    description: Path for output JSONL file
+  - {
+      name: dataset_name,
+      type: String,
+      description: "HuggingFace dataset name (e.g. squad, yelp_review_full)",
+    }
+  - {
+      name: split,
+      type: String,
+      description: "Dataset split to load (e.g. train, test, validation)",
+    }
+  - {
+      name: max_samples,
+      type: Integer,
+      description: "Maximum samples to load (0 for all)",
+    }
 
 outputs:
-  - name: mistral_jsonl
-    type: File
-    description: Path to Mistral-formatted instruction JSONL
+  - { name: csv_path, type: Path, description: "Path to saved CSV file" }
 
 implementation:
   container:
     image: python:3.10
-    command: [python3, qna_to_mistral_format.py]
+    command:
+      - python3
+      - -u
+      - -c
+      - |
+        import argparse
+        import os
+        import pandas as pd
+        from datasets import load_dataset
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--dataset_name", type=str, required=True)
+        parser.add_argument("--split", type=str, required=True)
+        parser.add_argument("--max_samples", type=int, required=True)
+        parser.add_argument("--csv_path", type=str, required=True)
+        args = parser.parse_args()
+
+        ds = load_dataset(args.dataset_name, split=args.split)
+        if args.max_samples > 0:
+            ds = ds.select(range(min(len(ds), args.max_samples)))
+        df = ds.to_pandas()
+        os.makedirs(os.path.dirname(args.csv_path), exist_ok=True)
+        df.to_csv(args.csv_path, index=False)
+        print(f"Saved {len(df)} samples to {args.csv_path}")
     args:
       - --dataset_name
       - { inputValue: dataset_name }
+      - --split
+      - { inputValue: split }
       - --max_samples
       - { inputValue: max_samples }
-      - --output_path
-      - { outputPath: mistral_jsonl }
-    fileOutputs:
-      mistral_jsonl: { outputPath: mistral_jsonl }
+      - --csv_path
+      - { outputPath: csv_path }
