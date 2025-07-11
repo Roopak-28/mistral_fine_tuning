@@ -1,5 +1,5 @@
 name: Prepare QnA Data in Mistral Format
-description: Loads a Hugging Face QnA dataset and outputs a JSONL file in Mistral instruction format.
+description: Loads a Hugging Face QnA dataset and saves a JSONL file in Mistral instruction format.
 
 inputs:
   - name: dataset_name
@@ -7,7 +7,7 @@ inputs:
     description: Hugging Face QnA dataset name (e.g. squad)
   - name: max_samples
     type: Integer
-    description: Maximum number of samples to process (set 0 for all)
+    description: Maximum number of samples (0 for all)
   - name: output_path
     type: String
     description: Path for output JSONL file
@@ -15,39 +15,18 @@ inputs:
 outputs:
   - name: mistral_jsonl
     type: File
-    description: Mistral-formatted instruction JSONL file
+    description: Path to Mistral-formatted instruction JSONL
 
 implementation:
   container:
     image: python:3.10
-    command:
-      - sh
-      - -c
-      - |
-        set -e
-        pip install --quiet --no-cache-dir datasets
-        python3 -u -c "
-import json
-from datasets import load_dataset
-
-dataset_name = '{inputValue: dataset_name}'
-max_samples = int('{inputValue: max_samples}')
-output_path = '{inputValue: output_path}'
-
-if max_samples > 0:
-    dataset = load_dataset(dataset_name, split=f'train[:{max_samples}]')
-else:
-    dataset = load_dataset(dataset_name, split='train')
-
-def format_example(example):
-    return {
-        'text': f\"<s>[INST] {example['question']} [/INST] {example['answers']['text'][0]}</s>\"
-    }
-formatted_data = [format_example(x) for x in dataset]
-with open(output_path, 'w', encoding='utf-8') as f:
-    for record in formatted_data:
-        f.write(json.dumps(record, ensure_ascii=False) + '\\n')
-print(f'Saved {len(formatted_data)} samples in Mistral instruction format to {output_path}')
-"
+    command: [python3, qna_to_mistral_format.py]
+    args:
+      - --dataset_name
+      - { inputValue: dataset_name }
+      - --max_samples
+      - { inputValue: max_samples }
+      - --output_path
+      - { outputPath: mistral_jsonl }
     fileOutputs:
-      mistral_jsonl: {inputValue: output_path}
+      mistral_jsonl: { outputPath: mistral_jsonl }
