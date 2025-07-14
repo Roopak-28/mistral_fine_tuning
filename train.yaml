@@ -14,15 +14,10 @@ inputs:
     }
   - { name: epochs, type: Integer, description: "Number of epochs", default: 1 }
   - { name: batch_size, type: Integer, description: "Batch size", default: 2 }
-  - {
-      name: peft_model_dir,
-      type: String,
-      description: "Directory to save PEFT adapter/model",
-    }
 
 outputs:
   - {
-      name: trained_peft_dir,
+      name: peft_model_dir,
       type: Path,
       description: "Path to PEFT adapter/model directory",
     }
@@ -105,4 +100,4 @@ implementation:
       - --batch_size
       - { inputValue: batch_size }
       - --peft_model_dir
-      - { outputPath: trained_peft_dir }
+      - { outputPath: peft_model_dir }
