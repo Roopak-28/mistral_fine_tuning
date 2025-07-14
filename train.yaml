@@ -13,14 +13,14 @@ inputs:
       description: "HuggingFace model ID (e.g. mistralai/Mistral-7B-Instruct-v0.2)",
     }
   - {
-      name: peft_model_dir,
+      name: output_dir,
       type: String,
       description: "Directory to save PEFT adapter/model",
     }
 
 outputs:
   - {
-      name: trained_peft_dir,
+      name: peft_model_dir,
       type: Path,
       description: "Path to PEFT adapter/model directory",
     }
@@ -44,7 +44,7 @@ implementation:
         parser = argparse.ArgumentParser()
         parser.add_argument("--jsonl_path", type=str, required=True)
         parser.add_argument("--model_name", type=str, required=True)
-        parser.add_argument("--peft_model_dir", type=str, required=True)
+        parser.add_argument("--output_dir", type=str, required=True)
         args = parser.parse_args()
 
         with open(args.jsonl_path, encoding="utf-8") as f:
@@ -71,7 +71,7 @@ implementation:
         data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
         training_args = TrainingArguments(
-            output_dir=args.peft_model_dir,
+            output_dir=args.output_dir,
             per_device_train_batch_size=2,
             num_train_epochs=1,
             logging_steps=10,
@@ -88,13 +88,13 @@ implementation:
             data_collator=data_collator,
         )
         trainer.train()
-        model.save_pretrained(args.peft_model_dir)
-        tokenizer.save_pretrained(args.peft_model_dir)
-        print("PEFT LoRA model saved to", args.peft_model_dir)
+        model.save_pretrained(args.output_dir)
+        tokenizer.save_pretrained(args.output_dir)
+        print("PEFT LoRA model saved to", args.output_dir)
     args:
       - --jsonl_path
       - { inputValue: jsonl_path }
       - --model_name
       - { inputValue: model_name }
-      - --peft_model_dir
-      - { outputPath: trained_peft_dir }
+      - --output_dir
+      - { outputPath: peft_model_dir }
