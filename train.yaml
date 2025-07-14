@@ -12,15 +12,17 @@ inputs:
       type: String,
       description: "HuggingFace model ID (e.g. mistralai/Mistral-7B-Instruct-v0.2)",
     }
+  - { name: epochs, type: Integer, description: "Number of epochs", default: 1 }
+  - { name: batch_size, type: Integer, description: "Batch size", default: 2 }
   - {
-      name: output_dir,
+      name: peft_model_dir,
       type: String,
       description: "Directory to save PEFT adapter/model",
     }
 
 outputs:
   - {
-      name: peft_model_dir,
+      name: trained_peft_dir,
       type: Path,
       description: "Path to PEFT adapter/model directory",
     }
@@ -44,10 +46,11 @@ implementation:
         parser = argparse.ArgumentParser()
         parser.add_argument("--jsonl_path", type=str, required=True)
         parser.add_argument("--model_name", type=str, required=True)
-        parser.add_argument("--output_dir", type=str, required=True)
+        parser.add_argument("--epochs", type=int, required=True)
+        parser.add_argument("--batch_size", type=int, required=True)
+        parser.add_argument("--peft_model_dir", type=str, required=True)
         args = parser.parse_args()
 
-        print("Loading data...")
         with open(args.jsonl_path, encoding="utf-8") as f:
             lines = [json.loads(line) for line in f]
         dataset = Dataset.from_list(lines)
@@ -68,14 +71,13 @@ implementation:
         def tokenize_fn(batch):
             return tokenizer(batch["text"], truncation=True, max_length=512, padding="max_length")
 
-        print("Tokenizing...")
         tokenized_ds = dataset.map(tokenize_fn, batched=True)
         data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
 
         training_args = TrainingArguments(
-            output_dir=args.output_dir,
-            per_device_train_batch_size=2,
-            num_train_epochs=1,
+            output_dir=args.peft_model_dir,
+            per_device_train_batch_size=args.batch_size,
+            num_train_epochs=args.epochs,
             logging_steps=10,
             save_steps=50,
             save_total_limit=2,
@@ -83,7 +85,6 @@ implementation:
             fp16=True if torch.cuda.is_available() else False,
         )
 
-        print("Starting training...")
         trainer = Trainer(
             model=model,
             args=training_args,
@@ -91,14 +92,17 @@ implementation:
             data_collator=data_collator,
         )
         trainer.train()
-        model.save_pretrained(args.output_dir)
-        tokenizer.save_pretrained(args.output_dir)
-        print("PEFT LoRA model saved to", args.output_dir)
-
+        model.save_pretrained(args.peft_model_dir)
+        tokenizer.save_pretrained(args.peft_model_dir)
+        print("PEFT LoRA model saved to", args.peft_model_dir)
     args:
       - --jsonl_path
       - { inputValue: jsonl_path }
       - --model_name
       - { inputValue: model_name }
-      - --output_dir
-      - { outputPath: peft_model_dir }
+      - --epochs
+      - { inputValue: epochs }
+      - --batch_size
+      - { inputValue: batch_size }
+      - --peft_model_dir
+      - { outputPath: trained_peft_dir }
