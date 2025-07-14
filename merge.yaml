@@ -1,0 +1,70 @@
+name: Merge LoRA Adapter into Base Model
+description: Merges a PEFT LoRA adapter into the base model and saves the merged model.
+
+inputs:
+  - {
+      name: base_model_name,
+      type: String,
+      description: "HF model ID or local path (e.g. mistralai/Mistral-7B-Instruct-v0.2)",
+    }
+  - {
+      name: peft_model_dir,
+      type: String,
+      description: "Directory of the trained LoRA/PEFT adapter",
+    }
+  - {
+      name: merged_model_dir,
+      type: String,
+      description: "Directory to save merged full model",
+    }
+
+outputs:
+  - {
+      name: merged_output_dir,
+      type: Path,
+      description: "Directory with merged model",
+    }
+
+implementation:
+  container:
+    image: python:3.10
+    command:
+      - python3
+      - -u
+      - -c
+      - |
+        import argparse
+        import os
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        from peft import PeftModel
+        import torch
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument("--base_model_name", type=str, required=True)
+        parser.add_argument("--peft_model_dir", type=str, required=True)
+        parser.add_argument("--merged_model_dir", type=str, required=True)
+        args = parser.parse_args()
+
+        print("Loading base model:", args.base_model_name)
+        base_model = AutoModelForCausalLM.from_pretrained(
+            args.base_model_name,
+            torch_dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32,
+            device_map="auto"
+        )
+        print("Loading PEFT adapter from:", args.peft_model_dir)
+        peft_model = PeftModel.from_pretrained(base_model, args.peft_model_dir)
+
+        print("Merging LoRA adapter into base model...")
+        merged_model = peft_model.merge_and_unload()
+        os.makedirs(args.merged_model_dir, exist_ok=True)
+        merged_model.save_pretrained(args.merged_model_dir)
+        tokenizer = AutoTokenizer.from_pretrained(args.base_model_name, trust_remote_code=True)
+        tokenizer.save_pretrained(args.merged_model_dir)
+        print(f"Merged model saved to {args.merged_model_dir}")
+    args:
+      - --base_model_name
+      - { inputValue: base_model_name }
+      - --peft_model_dir
+      - { inputValue: peft_model_dir }
+      - --merged_model_dir
+      - { outputPath: merged_output_dir }
