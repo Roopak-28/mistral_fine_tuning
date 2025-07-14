@@ -3,14 +3,13 @@ import json
 import os
 from datasets import Dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, Trainer, DataCollatorForLanguageModeling
-from peft import LoraConfig, get_peft_model, PeftModel
+from peft import LoraConfig, get_peft_model
 import torch
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--jsonl_path', type=str, required=True)
 parser.add_argument('--model_name', type=str, required=True)
 parser.add_argument('--output_dir', type=str, required=True)
-parser.add_argument('--merged_dir', type=str, required=True)
 parser.add_argument('--epochs', type=int, default=1)
 parser.add_argument('--batch_size', type=int, default=2)
 parser.add_argument('--max_length', type=int, default=512)
@@ -68,16 +67,5 @@ trainer = Trainer(
 trainer.train()
 model.save_pretrained(args.output_dir)
 tokenizer.save_pretrained(args.output_dir)
+print("PEFT LoRA model saved to", args.output_dir)
 
-print("Merging LoRA weights into base model...")
-base_model = AutoModelForCausalLM.from_pretrained(
-    args.model_name,
-    torch_dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32,
-    device_map="auto"
-)
-peft_model = PeftModel.from_pretrained(base_model, args.output_dir)
-peft_model = peft_model.merge_and_unload()
-os.makedirs(args.merged_dir, exist_ok=True)
-peft_model.save_pretrained(args.merged_dir)
-tokenizer.save_pretrained(args.merged_dir)
-print("Merged model saved to", args.merged_dir)
