@@ -12,12 +12,15 @@ inputs:
       type: String,
       description: "HuggingFace model ID (e.g. mistralai/Mistral-7B-Instruct-v0.2)",
     }
-  - { name: epochs, type: Integer, description: "Number of epochs", default: 1 }
-  - { name: batch_size, type: Integer, description: "Batch size", default: 2 }
+  - {
+      name: peft_model_dir,
+      type: String,
+      description: "Directory to save PEFT adapter/model",
+    }
 
 outputs:
   - {
-      name: peft_model_dir,
+      name: trained_peft_dir,
       type: Path,
       description: "Path to PEFT adapter/model directory",
     }
@@ -41,8 +44,6 @@ implementation:
         parser = argparse.ArgumentParser()
         parser.add_argument("--jsonl_path", type=str, required=True)
         parser.add_argument("--model_name", type=str, required=True)
-        parser.add_argument("--epochs", type=int, required=True)
-        parser.add_argument("--batch_size", type=int, required=True)
         parser.add_argument("--peft_model_dir", type=str, required=True)
         args = parser.parse_args()
 
@@ -71,8 +72,8 @@ implementation:
 
         training_args = TrainingArguments(
             output_dir=args.peft_model_dir,
-            per_device_train_batch_size=args.batch_size,
-            num_train_epochs=args.epochs,
+            per_device_train_batch_size=2,
+            num_train_epochs=1,
             logging_steps=10,
             save_steps=50,
             save_total_limit=2,
@@ -95,9 +96,5 @@ implementation:
       - { inputValue: jsonl_path }
       - --model_name
       - { inputValue: model_name }
-      - --epochs
-      - { inputValue: epochs }
-      - --batch_size
-      - { inputValue: batch_size }
       - --peft_model_dir
-      - { outputPath: peft_model_dir }
+      - { outputPath: trained_peft_dir }
