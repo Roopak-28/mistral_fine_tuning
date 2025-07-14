@@ -1,29 +1,31 @@
-name: Tokenize Mistral JSONL Dataset
-description: Loads a Mistral-format QnA JSONL, tokenizes it using a HuggingFace tokenizer, and saves it as a HuggingFace dataset.
+name: Convert CSV to Mistral JSONL
+description: Converts a QnA CSV (with columns "question" and "answer" or "answers") to a JSONL file in Mistral instruction format for LLM fine-tuning.
 
 inputs:
+  - { name: csv_path, type: String, description: "Path to QnA CSV file" }
   - {
-      name: jsonl_path,
+      name: output_jsonl,
       type: String,
-      description: "Path to Mistral-format JSONL file",
+      description: "Output path for Mistral-format JSONL file",
     }
   - {
-      name: tokenizer_name,
+      name: question_column,
       type: String,
-      description: "HuggingFace tokenizer name (e.g. mistralai/Mistral-7B-Instruct-v0.2)",
+      description: "Name of question column in CSV",
+      default: "question",
     }
   - {
-      name: max_length,
-      type: Integer,
-      description: "Maximum token length",
-      default: 512,
+      name: answer_column,
+      type: String,
+      description: "Name of answer column in CSV",
+      default: "answer",
     }
 
 outputs:
   - {
-      name: tokenized_path,
+      name: mistral_jsonl,
       type: Path,
-      description: "Path to saved HuggingFace dataset directory",
+      description: "Path to generated Mistral-format JSONL",
     }
 
 implementation:
@@ -35,42 +37,54 @@ implementation:
       - -c
       - |
         import argparse
+        import pandas as pd
         import json
         import os
-        from datasets import Dataset
-        from transformers import AutoTokenizer
 
         parser = argparse.ArgumentParser()
-        parser.add_argument("--jsonl_path", type=str, required=True)
-        parser.add_argument("--tokenizer_name", type=str, required=True)
-        parser.add_argument("--max_length", type=int, required=True)
-        parser.add_argument("--tokenized_path", type=str, required=True)
+        parser.add_argument("--csv_path", type=str, required=True)
+        parser.add_argument("--output_jsonl", type=str, required=True)
+        parser.add_argument("--question_column", type=str, required=True)
+        parser.add_argument("--answer_column", type=str, required=True)
         args = parser.parse_args()
 
-        with open(args.jsonl_path, encoding="utf-8") as f:
-            lines = [json.loads(line) for line in f]
+        df = pd.read_csv(args.csv_path)
+        if not args.question_column in df.columns:
+            raise ValueError(f"Question column '{args.question_column}' not found in CSV!")
+        if not args.answer_column in df.columns:
+            raise ValueError(f"Answer column '{args.answer_column}' not found in CSV!")
 
-        dataset = Dataset.from_list(lines)
-        tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name, trust_remote_code=True)
+        # Try to handle SQuAD-like 'answers' list columns if needed
+        def get_answer(row):
+            val = row[args.answer_column]
+            if isinstance(val, str):
+                if val.startswith("[") and val.endswith("]"):  # JSON list string
+                    try:
+                        aslist = json.loads(val)
+                        return aslist[0] if aslist else ""
+                    except:
+                        return val
+                else:
+                    return val
+            elif isinstance(val, list):
+                return val[0] if val else ""
+            else:
+                return str(val)
 
-        def tokenize_fn(batch):
-            return tokenizer(
-                batch["text"], 
-                truncation=True, 
-                max_length=args.max_length, 
-                padding="max_length"
-            )
+        with open(args.output_jsonl, "w", encoding="utf-8") as f:
+            for _, row in df.iterrows():
+                q = str(row[args.question_column])
+                a = get_answer(row)
+                data = {"text": f"<s>[INST] {q} [/INST] {a}</s>"}
+                f.write(json.dumps(data, ensure_ascii=False) + "\n")
+        print(f"Saved Mistral-formatted JSONL to {args.output_jsonl}")
 
-        tokenized_dataset = dataset.map(tokenize_fn, batched=True)
-        os.makedirs(args.tokenized_path, exist_ok=True)
-        tokenized_dataset.save_to_disk(args.tokenized_path)
-        print(f"Tokenized dataset saved to {args.tokenized_path}")
     args:
-      - --jsonl_path
-      - { inputValue: jsonl_path }
-      - --tokenizer_name
-      - { inputValue: tokenizer_name }
-      - --max_length
-      - { inputValue: max_length }
-      - --tokenized_path
-      - { outputPath: tokenized_path }
+      - --csv_path
+      - { inputValue: csv_path }
+      - --output_jsonl
+      - { outputPath: mistral_jsonl }
+      - --question_column
+      - { inputValue: question_column }
+      - --answer_column
+      - { inputValue: answer_column }
