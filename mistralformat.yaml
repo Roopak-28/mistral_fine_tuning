@@ -1,0 +1,51 @@
+name: Tokenize Mistral QnA Dataset
+description: Tokenizes a Mistral-format QnA JSONL using a HuggingFace tokenizer and saves as HuggingFace dataset.
+
+inputs:
+  - {
+      name: jsonl_path,
+      type: String,
+      description: "Path to input Mistral-format JSONL file",
+    }
+  - {
+      name: tokenizer_name,
+      type: String,
+      description: "HuggingFace tokenizer name (e.g. mistralai/Mistral-7B-Instruct-v0.2)",
+    }
+  - {
+      name: output_path,
+      type: String,
+      description: "Directory to save tokenized dataset",
+    }
+  - {
+      name: max_length,
+      type: Integer,
+      description: "Max token length",
+      default: 512,
+    }
+
+outputs:
+  - {
+      name: tokenized_path,
+      type: Path,
+      description: "Directory with tokenized HuggingFace dataset",
+    }
+
+implementation:
+  container:
+    image: python:3.10
+    command:
+      - python3
+      - -u
+      - tokenize_mistral_jsonl.py
+    args:
+      - --jsonl_path
+      - { inputValue: jsonl_path }
+      - --tokenizer_name
+      - { inputValue: tokenizer_name }
+      - --output_path
+      - { outputPath: tokenized_path }
+      - --max_length
+      - { inputValue: max_length }
+    fileOutputs:
+      tokenized_path: { outputPath: tokenized_path }
