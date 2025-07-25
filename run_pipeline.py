@@ -89,7 +89,7 @@ app = FastAPI()
 @app.post("/run-pipeline")
 def run_pipeline(config: PipelineConfig):
     config = config.dict()
-    config['experiment_id'] = "37e5cbe2-9fd7-4bc1-ad49-86d8a4a2c2e3"
+    config['experiment_id'] = "1ec485ba-e6ed-4fa7-aa41-d4b8d5841a08"
     config['access_token'] = get_access_token()
     pipeline_id = create_pipeline(config)
     config["pipeline_id"] = pipeline_id
@@ -109,7 +109,7 @@ def run_pipeline(config: PipelineConfig):
 #         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 if __name__ == "__main__":
-    uvicorn.run("run_pipeline:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("run_pipeline:app", host="127.0.0.1", port=8000, reload=True)
 
 
 

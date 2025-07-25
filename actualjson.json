@@ -1,0 +1,394 @@
+{
+  "pipeline_name": "Gen_FT_a",
+  "pipeline_description": "generalised fine tuning using mistral format",
+  "pipeline_json": {
+    "doc_type": "pipeline",
+    "version": "3.0",
+    "json_schema": "http://api.dataplatform.ibm.com/schemas/common-pipeline/pipeline-flow/pipeline-flow-v3-schema.json",
+    "id": "elyra-auto-generated-pipeline",
+    "primary_pipeline": "primary",
+    "pipelines": [
+      {
+        "id": "primary",
+        "nodes": [
+          {
+            "id": "104de5cb-16aa-476f-8acb-fe3a6e830058",
+            "type": "execution_node",
+            "op": "url-catalog:d2dfaed935f2",
+            "app_data": {
+              "component_parameters": {
+                "dataset_name": {
+                  "widget": "parameter",
+                  "value": "dataset_name"
+                },
+                "split": {
+                  "widget": "parameter",
+                  "value": "split"
+                },
+                "max_samples": {
+                  "widget": "number",
+                  "value": 1
+                },
+                "kubernetes_pod_annotations": [],
+                "kubernetes_pod_labels": [],
+                "kubernetes_shared_mem_size": {},
+                "kubernetes_tolerations": [],
+                "mounted_volumes": []
+              },
+              "component_source": "{\"catalog_type\": \"url-catalog\", \"component_ref\": {\"url\": \"https://raw.githubusercontent.com/Roopak-28/mistral_fine_tuning/refs/heads/main/loadingdataset.yaml\"}}",
+              "label": "",
+              "ui_data": {
+                "label": "Load HuggingFace Dataset to CSV",
+                "image": "/static/elyra/kubeflow.svg",
+                "x_pos": 44,
+                "y_pos": 334.5,
+                "description": "Loads a Hugging Face dataset split and saves it as a CSV file for downstream use."
+              }
+            },
+            "inputs": [
+              {
+                "id": "inPort",
+                "app_data": {
+                  "ui_data": {
+                    "cardinality": {
+                      "min": 0,
+                      "max": -1
+                    },
+                    "label": "Input Port"
+                  }
+                }
+              }
+            ],
+            "outputs": [
+              {
+                "id": "outPort",
+                "app_data": {
+                  "ui_data": {
+                    "cardinality": {
+                      "min": 0,
+                      "max": -1
+                    },
+                    "label": "Output Port"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "id": "751dfaea-f58a-437f-b715-1d517cdbcb6f",
+            "type": "execution_node",
+            "op": "url-catalog:6c349e57e183",
+            "app_data": {
+              "component_parameters": {
+                "base_model_name": {
+                  "widget": "parameter",
+                  "value": "base_model_name"
+                },
+                "peft_model_dir": {
+                  "widget": "inputpath",
+                  "value": {
+                    "value": "f037a812-da28-4251-a410-a339787b3c50",
+                    "option": "output_peft_model_dir"
+                  }
+                },
+                "merged_model_dir": {
+                  "widget": "parameter",
+                  "value": "output_merged_path"
+                },
+                "kubernetes_pod_annotations": [],
+                "kubernetes_pod_labels": [],
+                "kubernetes_shared_mem_size": {},
+                "kubernetes_tolerations": [],
+                "mounted_volumes": []
+              },
+              "component_source": "{\"catalog_type\": \"url-catalog\", \"component_ref\": {\"url\": \"https://raw.githubusercontent.com/Roopak-28/mistral_fine_tuning/refs/heads/main/merge.yaml\"}}",
+              "label": "",
+              "ui_data": {
+                "label": "Merge LoRA Adapter into Base Model",
+                "image": "/static/elyra/kubeflow.svg",
+                "x_pos": 603,
+                "y_pos": 598.5,
+                "description": "Merges a PEFT LoRA adapter into the base model and saves the merged model."
+              }
+            },
+            "inputs": [
+              {
+                "id": "inPort",
+                "app_data": {
+                  "ui_data": {
+                    "cardinality": {
+                      "min": 0,
+                      "max": -1
+                    },
+                    "label": "Input Port"
+                  }
+                },
+                "links": [
+                  {
+                    "id": "822aa1fc-9ceb-4672-8dee-09b866850a95",
+                    "node_id_ref": "f037a812-da28-4251-a410-a339787b3c50",
+                    "port_id_ref": "outPort"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "id": "outPort",
+                "app_data": {
+                  "ui_data": {
+                    "cardinality": {
+                      "min": 0,
+                      "max": -1
+                    },
+                    "label": "Output Port"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "id": "85fa9812-285b-4b07-9920-a8c75461f2b1",
+            "type": "execution_node",
+            "op": "url-catalog:2627ecd582fd",
+            "app_data": {
+              "component_parameters": {
+                "csv_path": {
+                  "widget": "parameter",
+                  "value": "input_csv_path"
+                },
+                "output_jsonl": {
+                  "widget": "parameter",
+                  "value": "output_dataset_path"
+                },
+                "question_column": {
+                  "widget": "parameter",
+                  "value": "text_column"
+                },
+                "answer_column": {
+                  "widget": "parameter",
+                  "value": "label_column"
+                },
+                "kubernetes_pod_annotations": [],
+                "kubernetes_pod_labels": [],
+                "kubernetes_shared_mem_size": {},
+                "kubernetes_tolerations": [],
+                "mounted_volumes": []
+              },
+              "component_source": "{\"catalog_type\": \"url-catalog\", \"component_ref\": {\"url\": \"https://raw.githubusercontent.com/Roopak-28/mistral_fine_tuning/refs/heads/main/mistralformat.yaml\"}}",
+              "label": "",
+              "ui_data": {
+                "label": "Convert CSV to Mistral JSONL",
+                "image": "/static/elyra/kubeflow.svg",
+                "x_pos": 318,
+                "y_pos": 332.5,
+                "description": "Converts a QnA CSV (with columns \"question\" and \"answer\" or \"answers\") to a JSONL file in Mistral instruction format for LLM fine-tuning."
+              }
+            },
+            "inputs": [
+              {
+                "id": "inPort",
+                "app_data": {
+                  "ui_data": {
+                    "cardinality": {
+                      "min": 0,
+                      "max": -1
+                    },
+                    "label": "Input Port"
+                  }
+                },
+                "links": [
+                  {
+                    "id": "3da40218-c05d-4a82-bf95-e3ea591a746c",
+                    "node_id_ref": "104de5cb-16aa-476f-8acb-fe3a6e830058",
+                    "port_id_ref": "outPort"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "id": "outPort",
+                "app_data": {
+                  "ui_data": {
+                    "cardinality": {
+                      "min": 0,
+                      "max": -1
+                    },
+                    "label": "Output Port"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "id": "f037a812-da28-4251-a410-a339787b3c50",
+            "type": "execution_node",
+            "op": "url-catalog:46926aa066f2",
+            "app_data": {
+              "component_parameters": {
+                "jsonl_path": {
+                  "widget": "parameter",
+                  "value": "train_data_path"
+                },
+                "model_name": {
+                  "widget": "parameter",
+                  "value": "model_name_or_path"
+                },
+                "output_dir": {
+                  "widget": "parameter",
+                  "value": "output_dir"
+                },
+                "kubernetes_pod_annotations": [],
+                "kubernetes_pod_labels": [],
+                "kubernetes_shared_mem_size": {},
+                "kubernetes_tolerations": [],
+                "mounted_volumes": []
+              },
+              "component_source": "{\"catalog_type\": \"url-catalog\", \"component_ref\": {\"url\": \"https://raw.githubusercontent.com/Roopak-28/mistral_fine_tuning/refs/heads/main/train.yaml\"}}",
+              "label": "",
+              "ui_data": {
+                "label": "Train Mistral LLM with PEFT (LoRA)",
+                "image": "/static/elyra/kubeflow.svg",
+                "x_pos": 598,
+                "y_pos": 331.5,
+                "description": "Fine-tunes a Mistral model using PEFT LoRA on Mistral-format JSONL and saves the PEFT adapter directory."
+              }
+            },
+            "inputs": [
+              {
+                "id": "inPort",
+                "app_data": {
+                  "ui_data": {
+                    "cardinality": {
+                      "min": 0,
+                      "max": -1
+                    },
+                    "label": "Input Port"
+                  }
+                },
+                "links": [
+                  {
+                    "id": "f4c48160-aded-48da-b473-00a94c3af844",
+                    "node_id_ref": "85fa9812-285b-4b07-9920-a8c75461f2b1",
+                    "port_id_ref": "outPort"
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "id": "outPort",
+                "app_data": {
+                  "ui_data": {
+                    "cardinality": {
+                      "min": 0,
+                      "max": -1
+                    },
+                    "label": "Output Port"
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "app_data": {
+          "ui_data": {
+            "comments": []
+          },
+          "version": 8,
+          "runtime_type": "KUBEFLOW_PIPELINES",
+          "properties": {
+            "name": "Generalise_FT",
+            "runtime": "Kubeflow Pipelines",
+            "pipeline_parameters": [
+              {
+                "name": "dataset_name",
+                "description": "HuggingFace dataset name",
+                "default_value": { "type": "String", "value": "squad" },
+                "required": true
+              },
+              {
+                "name": "split",
+                "description": "Dataset split",
+                "default_value": { "type": "String", "value": "train" },
+                "required": true
+              },
+              {
+                "name": "max_samples",
+                "description": "Maximum samples to load",
+                "default_value": { "type": "Integer", "value": 100 },
+                "required": true
+              },
+              {
+                "name": "input_csv_path",
+                "description": "Path to input CSV",
+                "default_value": { "type": "String", "value": "/data/dataset.csv" },
+                "required": true
+              },
+              {
+                "name": "output_dataset_path",
+                "description": "Path to output JSONL",
+                "default_value": { "type": "String", "value": "/data/dataset.jsonl" },
+                "required": true
+              },
+              {
+                "name": "text_column",
+                "description": "CSV column for question/text",
+                "default_value": { "type": "String", "value": "question" },
+                "required": true
+              },
+              {
+                "name": "label_column",
+                "description": "CSV column for answer/label",
+                "default_value": { "type": "String", "value": "answer" },
+                "required": true
+              },
+              {
+                "name": "train_data_path",
+                "description": "Path to training JSONL file",
+                "default_value": { "type": "String", "value": "/data/dataset.jsonl" },
+                "required": true
+              },
+              {
+                "name": "model_name_or_path",
+                "description": "HuggingFace model id",
+                "default_value": { "type": "String", "value": "mistralai/Mistral-7B-v0.1" },
+                "required": true
+              },
+              {
+                "name": "output_dir",
+                "description": "Path to store LoRA adapter",
+                "default_value": { "type": "String", "value": "/data/peft_lora_model" },
+                "required": true
+              },
+              {
+                "name": "base_model_name",
+                "description": "Base Model for Merge",
+                "default_value": { "type": "String", "value": "mistralai/Mistral-7B-v0.1" },
+                "required": true
+              },
+              {
+                "name": "output_merged_path",
+                "description": "Merged Model Output Path",
+                "default_value": { "type": "String", "value": "/data/mistral_merged" },
+                "required": true
+              }
+            ],
+            "pipeline_defaults": {
+              "kubernetes_tolerations": [],
+              "mounted_volumes": [],
+              "kubernetes_shared_mem_size": {},
+              "kubernetes_pod_labels": [],
+              "kubernetes_pod_annotations": [],
+              "env_vars": [],
+              "kubernetes_secrets": []
+            }
+          }
+        },
+        "runtime_ref": ""
+      }
+    ],
+    "schemas": []
+  }
+}

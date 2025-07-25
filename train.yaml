@@ -2,28 +2,12 @@ name: Train Mistral LLM with PEFT (LoRA)
 description: Fine-tunes a Mistral model using PEFT LoRA on Mistral-format JSONL and saves the PEFT adapter directory.
 
 inputs:
-  - {
-      name: jsonl_path,
-      type: String,
-      description: "Path to Mistral-format JSONL file",
-    }
-  - {
-      name: model_name,
-      type: String,
-      description: "HuggingFace model ID (e.g. mistralai/Mistral-7B-Instruct-v0.2)",
-    }
-  - {
-      name: output_dir,
-      type: String,
-      description: "Directory to save PEFT adapter/model",
-    }
+  - { name: jsonl_path, type: String }
+  - { name: model_name, type: String }
+  - { name: output_dir, type: String }
 
 outputs:
-  - {
-      name: peft_model_dir,
-      type: Path,
-      description: "Path to PEFT adapter/model directory",
-    }
+  - { name: peft_model_dir, type: Path }
 
 implementation:
   container:

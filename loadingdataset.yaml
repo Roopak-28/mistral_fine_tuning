@@ -2,24 +2,12 @@ name: Load HuggingFace Dataset to CSV
 description: Loads a Hugging Face dataset split and saves it as a CSV file for downstream use.
 
 inputs:
-  - {
-      name: dataset_name,
-      type: String,
-      description: "HuggingFace dataset name (e.g. squad, yelp_review_full)",
-    }
-  - {
-      name: split,
-      type: String,
-      description: "Dataset split to load (e.g. train, test, validation)",
-    }
-  - {
-      name: max_samples,
-      type: Integer,
-      description: "Maximum samples to load (0 for all)",
-    }
+  - { name: dataset_name, type: String }
+  - { name: split, type: String }
+  - { name: max_samples, type: Integer }
 
 outputs:
-  - { name: csv_path, type: Path, description: "Path to saved CSV file" }
+  - { name: csv_path, type: Path }
 
 implementation:
   container:

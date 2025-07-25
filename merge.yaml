@@ -2,28 +2,12 @@ name: Merge LoRA Adapter into Base Model
 description: Merges a PEFT LoRA adapter into the base model and saves the merged model.
 
 inputs:
-  - {
-      name: base_model_name,
-      type: String,
-      description: "HF model ID or local path (e.g. mistralai/Mistral-7B-Instruct-v0.2)",
-    }
-  - {
-      name: peft_model_dir,
-      type: String,
-      description: "Directory of the trained LoRA/PEFT adapter",
-    }
-  - {
-      name: merged_model_dir,
-      type: String,
-      description: "Directory to save merged full model",
-    }
+  - { name: base_model_name, type: String }
+  - { name: peft_model_dir, type: String }
+  - { name: merged_model_dir, type: String }
 
 outputs:
-  - {
-      name: merged_output_dir,
-      type: Path,
-      description: "Directory with merged model",
-    }
+  - { name: merged_output_dir, type: Path }
 
 implementation:
   container:
