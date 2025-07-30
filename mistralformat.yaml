@@ -2,7 +2,7 @@ name: Convert CSV to Mistral JSONL
 description: Converts a QnA CSV (with columns "question" and "answer" or "answers") to a JSONL file in Mistral instruction format for LLM fine-tuning.
 
 inputs:
-  - { name: csv_path, type: String }
+  - { name: csv_path, type: Path }
   - { name: question_column, type: String }
   - { name: answer_column, type: String }
 
@@ -59,7 +59,7 @@ implementation:
         print(f"Saved Mistral-formatted JSONL to {args.mistral_jsonl}")
     args:
       - --csv_path
-      - { inputValue: csv_path }
+      - { inputPath: csv_path }
       - --mistral_jsonl
       - { outputPath: mistral_jsonl }
       - --question_column

@@ -7,7 +7,7 @@ inputs:
   - { name: max_samples, type: Integer }
 
 outputs:
-  - { name: csv_path, type: String }
+  - { name: csv_path, type: Path }
 
 implementation:
   container:
@@ -44,4 +44,4 @@ implementation:
       - --max_samples
       - { inputValue: max_samples }
       - --csv_path
-      - { outputValue: csv_path }
+      - { outputPath: csv_path }
