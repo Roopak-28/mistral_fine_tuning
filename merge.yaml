@@ -3,7 +3,7 @@ description: Merges a PEFT LoRA adapter into the base model and saves the merged
 
 inputs:
   - { name: base_model_name, type: String }
-  - { name: peft_model_dir, type: String }
+  - { name: peft_model_dir, type: Path }              # ✅ Fixed
   - { name: merged_model_dir, type: String }
 
 outputs:
@@ -45,6 +45,6 @@ implementation:
       - --base_model_name
       - { inputValue: base_model_name }
       - --peft_model_dir
-      - { inputValue: peft_model_dir }
+      - { inputPath: peft_model_dir }                # ✅ use inputPath
       - --merged_model_dir
       - { outputPath: merged_output_dir }
