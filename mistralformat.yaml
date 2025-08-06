@@ -2,7 +2,7 @@ name: Convert CSV to Mistral JSONL
 description: Converts a QnA CSV (with columns "question" and "answer" or "answers") to a JSONL file in Mistral instruction format for LLM fine-tuning.
 
 inputs:
-  - { name: csv_path, type: Path }
+  - { name: csvpth, type: Path }
   - { name: question_column, type: String }
   - { name: answer_column, type: String }
 
@@ -22,13 +22,13 @@ implementation:
         import json
 
         parser = argparse.ArgumentParser()
-        parser.add_argument("--csv_path", type=str, required=True)
+        parser.add_argument("--csvpth", type=str, required=True)
         parser.add_argument("--mistral_jsonl", type=str, required=True)
         parser.add_argument("--question_column", type=str, required=True)
         parser.add_argument("--answer_column", type=str, required=True)
         args = parser.parse_args()
 
-        df = pd.read_csv(args.csv_path)
+        df = pd.read_csv(args.csvpth)
         if args.question_column not in df.columns:
             raise ValueError(f"Question column '{args.question_column}' not found in CSV!")
         if args.answer_column not in df.columns:
@@ -56,10 +56,9 @@ implementation:
                 a = get_answer(row)
                 data = {"text": f"<s>[INST] {q} [/INST] {a}</s>"}
                 f.write(json.dumps(data, ensure_ascii=False) + "\n")
-        print(f"Saved Mistral-formatted JSONL to {args.mistral_jsonl}")
     args:
-      - --csv_path
-      - { inputPath: csv_path }
+      - --csvpth
+      - { inputPath: csvpth }
       - --mistral_jsonl
       - { outputPath: mistral_jsonl }
       - --question_column
