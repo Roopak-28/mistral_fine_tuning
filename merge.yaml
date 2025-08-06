@@ -29,22 +29,18 @@ implementation:
         parser.add_argument("--merged_model_dir", type=str, required=True)
         args = parser.parse_args()
 
-        print("Loading base model:", args.base_model_name)
         base_model = AutoModelForCausalLM.from_pretrained(
             args.base_model_name,
             torch_dtype=torch.bfloat16 if torch.cuda.is_available() else torch.float32,
             device_map="auto"
         )
-        print("Loading PEFT adapter from:", args.peft_model_dir)
         peft_model = PeftModel.from_pretrained(base_model, args.peft_model_dir)
 
-        print("Merging LoRA adapter into base model...")
         merged_model = peft_model.merge_and_unload()
         os.makedirs(args.merged_model_dir, exist_ok=True)
         merged_model.save_pretrained(args.merged_model_dir)
         tokenizer = AutoTokenizer.from_pretrained(args.base_model_name, trust_remote_code=True)
         tokenizer.save_pretrained(args.merged_model_dir)
-        print(f"Merged model saved to {args.merged_model_dir}")
     args:
       - --base_model_name
       - { inputValue: base_model_name }
