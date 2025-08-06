@@ -1,5 +1,5 @@
 name: Convert CSV to Mistral JSONL
-description: Converts a QnA CSV (with columns "question" and "answer" or "answers") to a JSONL-style list, returned as JSON, for Mistral instruction fine-tuning.
+description: Converts a QnA CSV (with columns "question" and "answer" or "answers") to a JSONL-style list, returned as a JSON string, for Mistral instruction fine-tuning.
 
 inputs:
   - { name: csvpth, type: Path }
@@ -7,7 +7,7 @@ inputs:
   - { name: answer_column, type: String }
 
 outputs:
-  - { name: mistral_jsonl, type: Json }
+  - { name: mistral_jsonl, type: String }
 
 implementation:
   container:
@@ -56,7 +56,8 @@ implementation:
             a = get_answer(row)
             output.append({ "text": f"<s>[INST] {q} [/INST] {a}</s>" })
 
-        json.dump(output, sys.stdout, ensure_ascii=False)
+        # Emit the result as a single JSON string to stdout
+        print(json.dumps(output, ensure_ascii=False))
     args:
       - --csvpth
       - { inputPath: csvpth }
@@ -64,3 +65,4 @@ implementation:
       - { inputValue: question_column }
       - --answer_column
       - { inputValue: answer_column }
+      - { outputValue: mistral_jsonl }
