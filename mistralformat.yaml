@@ -1,5 +1,5 @@
 name: Convert CSV to Mistral JSONL
-description: Converts a QnA CSV (with columns "question" and "answer" or "answers") to a JSONL-style list, returned as a JSON string, for Mistral instruction fine-tuning.
+description: Converts a QnA CSV (with columns "question" and "answer" or "answers") to a JSONL-style file for Mistral instruction fine-tuning.
 
 inputs:
   - { name: csvpth, type: Path }
@@ -7,7 +7,7 @@ inputs:
   - { name: answer_column, type: String }
 
 outputs:
-  - { name: mistral_jsonl, type: String }
+  - { name: mistral_jsonl, type: Path }
 
 implementation:
   container:
@@ -21,11 +21,13 @@ implementation:
         import pandas as pd
         import json
         import sys
+        import os
 
         parser = argparse.ArgumentParser()
         parser.add_argument("--csvpth", type=str, required=True)
         parser.add_argument("--question_column", type=str, required=True)
         parser.add_argument("--answer_column", type=str, required=True)
+        parser.add_argument("--mistral_jsonl", type=str, required=True)
         args = parser.parse_args()
 
         df = pd.read_csv(args.csvpth)
@@ -56,8 +58,10 @@ implementation:
             a = get_answer(row)
             output.append({ "text": f"<s>[INST] {q} [/INST] {a}</s>" })
 
-        # Emit the result as a single JSON string to stdout
-        print(json.dumps(output, ensure_ascii=False))
+        # Write JSONL file
+        with open(args.mistral_jsonl, "w", encoding="utf-8") as f:
+            for line in output:
+                f.write(json.dumps(line, ensure_ascii=False) + "\n")
     args:
       - --csvpth
       - { inputPath: csvpth }
@@ -65,4 +69,5 @@ implementation:
       - { inputValue: question_column }
       - --answer_column
       - { inputValue: answer_column }
-      - { outputValue: mistral_jsonl }
+      - --mistral_jsonl
+      - { outputPath: mistral_jsonl }
