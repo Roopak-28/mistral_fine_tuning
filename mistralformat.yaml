@@ -7,7 +7,7 @@ inputs:
   - { name: answer_column, type: String }
 
 outputs:
-  - { name: mistral_jsonl, type: Path }
+  - { name: mistral_jsonl, type: String }
 
 implementation:
   container:
@@ -58,10 +58,12 @@ implementation:
             a = get_answer(row)
             output.append({ "text": f"<s>[INST] {q} [/INST] {a}</s>" })
 
-        # Write JSONL file
         with open(args.mistral_jsonl, "w", encoding="utf-8") as f:
             for line in output:
                 f.write(json.dumps(line, ensure_ascii=False) + "\n")
+
+        # Print the output path for Elyra to capture
+        print(args.mistral_jsonl)
     args:
       - --csvpth
       - { inputPath: csvpth }
@@ -70,4 +72,4 @@ implementation:
       - --answer_column
       - { inputValue: answer_column }
       - --mistral_jsonl
-      - { outputPath: mistral_jsonl }
+      - { outputValue: mistral_jsonl }
